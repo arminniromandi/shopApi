@@ -1,0 +1,56 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: shop_api
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - DB_HOST=postgres_db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres_password_123
+      - DB_NAME=shop_db
+      - DB_SSLMODE=disable
+      - JWT_SECRET=shop_jwt_secret_key_change_in_production
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USER=
+      - SMTP_PASSWORD=
+      - SMTP_FROM=
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+    networks:
+      - shop_network
+
+  postgres_db:
+    image: postgres:16-alpine
+    container_name: shop_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_password_123
+      POSTGRES_DB: shop_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d shop_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shop_network
+
+volumes:
+  pgdata:
+    driver: local
+
+networks:
+  shop_network:
+    driver: bridge
